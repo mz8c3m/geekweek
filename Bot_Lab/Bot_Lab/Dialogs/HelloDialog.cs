@@ -71,7 +71,7 @@ namespace Bot_Lab.Dialogs
             //we call respond again, this time it will print out the name and greeting
             await Respond(context);
             //call context.done to exit this dialog and go back to the root dialog
-            context.Done(message);
+            context.Done<object>(null);
 }
 }
     }

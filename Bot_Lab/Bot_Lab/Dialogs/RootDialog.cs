@@ -13,19 +13,11 @@ namespace Bot_Lab.Dialogs
 {
     [Serializable]
     [LuisModel("3a581190-2dc8-4066-a7be-f9caea6fb287", "9eba2173d4034b079ef08af9a85c1fd1")]
+    //[LuisModel("1a8ad562-4d60-464b-9400-df49f6919f0e", "d195de5fa46443d5b0b207520495cb6e")]
+    //[LuisModel("d195de5fa46443d5b0b207520495cb6e", "628d0fe3-08aa-4c7b-ab94-1eba6dc15516")]
     public class RootDialog : LuisDialog<object>
     {
-        private const string ReservartionOption = "Reserve Table";
-        private const string HelloOption = "Say Hello";
-        private async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> result)
-        {
-            await context.PostAsync("Welcome to Dinner Bot, lets book a table for you. You will need to provide a few details.");
-            var reservationForm = new FormDialog<ReservationDialog>(new ReservationDialog(),
-            ReservationDialog.BuildForm,
-            FormOptions.PromptFieldsWithValues);
-            context.Call(reservationForm, ReservationFormComplete);
-        }
-
+        
         [LuisIntent("")]
         [LuisIntent("None")]
         public async Task None(IDialogContext context, LuisResult result)
@@ -34,14 +26,15 @@ namespace Bot_Lab.Dialogs
             await context.PostAsync(message);
             context.Wait(MessageReceived);
         }
-        [LuisIntent("ReserveATable")]
-        public async Task ReserveATable(IDialogContext context, LuisResult result)
+        [LuisIntent("SayHello")]
+        public async Task getUserInfo(IDialogContext context, LuisResult result)
         {
             try
             {
-                await context.PostAsync("Great, lets book a table for you. You will need to provide a few details.");
-                var reservationForm = new FormDialog<ReservationDialog>(new ReservationDialog(), ReservationDialog.BuildForm, FormOptions.PromptInStart);
-                context.Call(reservationForm, ReservationFormComplete);
+                await context.PostAsync("Hi, I am GM's IT Buddy.  I can help you get IT services.  Lets find out who to submit the requests for. You will need to provide a few details.");
+                // var userID = new FormDialog<UserIDDialog>(new UserIDDialog(), UserIDDialog.BuildUserIDForm, FormOptions.PromptInStart);
+                // context.Call(userID, userIDComplete);
+                context.Wait(MessageReceived);
             }
             catch (Exception)
             {
@@ -49,40 +42,40 @@ namespace Bot_Lab.Dialogs
                 context.Wait(MessageReceived);
             }
         }
-        [LuisIntent("SayHello")]
-        public async Task SayHello(IDialogContext context, LuisResult result)
+        
+       /* public async Task SayHello(IDialogContext context, LuisResult result)
         {
-            context.Call(new HelloDialog(), this.ResumeAfterOptionDialog);
-        }
+            context.Call(new HelloDialog(), this.ResumeAfterUserHelloDialog);
+        }*/
         [LuisIntent("Help")]
         public async Task Help(IDialogContext context, LuisResult result)
         {
-            await context.PostAsync("Insert Help Dialog here");
+            await context.PostAsync("type a statement like 'I want to install...'  or 'I am new to a project' and send in the chat");
             context.Wait(MessageReceived);
         }
-        private async Task ReservationFormComplete(IDialogContext context, IAwaitable<ReservationDialog> result)
+        private async Task userIDComplete(IDialogContext context, IAwaitable<UserIDDialog> result)
         {
             try
             {
-                var reservation = await result;
-                await context.PostAsync("Thanks for the using Dinner Bot.");
+                var request = await result;
+                await context.PostAsync("Thanks for the using GM's IT Buddy.");
                 //use a card for showing their data
                 var resultMessage = context.MakeMessage();
                 //resultMessage.AttachmentLayout = AttachmentLayoutTypes.Carousel;
                 resultMessage.Attachments = new List<Attachment>();
                 string ThankYouMessage;
-                if (reservation.SpecialOccasion == ReservationDialog.SpecialOccasionOptions.none)
+                if (request.RequestForOptions == UserIDDialog.RequestFor.Self)
                 {
-                    ThankYouMessage = reservation.Name + ", thank you for joining us for dinner, we look forward to having you and your guests.";
+                    ThankYouMessage = request.Name + ", thank you for joining us for dinner, we look forward to having you and your guests.";
                 }
                 else
                 {
-                    ThankYouMessage = reservation.Name + ", thank you for joining us for dinner, we look forward to having you and your guests for the " + reservation.SpecialOccasion;
+                    ThankYouMessage = request.Name + ", thank you for joining us for dinner, we look forward to having you and your guests for the " + request.RequestForOptions;
                 }
                 ThumbnailCard thumbnailCard = new ThumbnailCard()
                 {
-                    Title = String.Format("Dinner Reservations on {0}", reservation.ReservationDate.ToString("MM/dd/yyyy")),
-                    Subtitle = String.Format("at {1} for {0} people", reservation.NumberOfDinners, reservation.ReservationTime.ToString("hh:mm")),
+                    Title = String.Format("User {0}", request.GMID),
+                    Subtitle = String.Format("{1} email: {0}", request.Name, request.Email),
                     Text = ThankYouMessage,
                     Images = new List<CardImage>()
                         {
@@ -104,11 +97,11 @@ namespace Bot_Lab.Dialogs
             }
             finally
             {
-                context.Wait(MessageReceivedAsync);
+                context.Wait(this.MessageReceived);
             }
         }
 
-        private async Task OnOptionSelected(IDialogContext context, IAwaitable<string> result)
+      /*  private async Task OnOptionSelected(IDialogContext context, IAwaitable<string> result)
         {
             try
             {
@@ -119,7 +112,7 @@ namespace Bot_Lab.Dialogs
                     case ReservartionOption:
                         break;
                     case HelloOption:
-                        context.Call(new HelloDialog(), this.ResumeAfterOptionDialog);
+                        context.Call(new HelloDialog(), this.ResumeAfterUserHelloDialog);
                         break;
                 }
             }
@@ -127,13 +120,15 @@ namespace Bot_Lab.Dialogs
             {
                 var exDetail = ex;
                 //If too many attempts we send error to user and start all over.
-                await context.PostAsync($"Ooops! Too many attemps :( You can start again!");
+                await context.PostAsync($"Ooops! Too many attempts :( You can start again!");
                 //This sets us in a waiting state, after running the prompt again.
                 context.Wait(this.MessageReceivedAsync);
             }
-        }
+        }*/
 
-        private async Task ResumeAfterOptionDialog(IDialogContext context, IAwaitable<object> result)
+        private async Task ResumeAfterUserHelloDialog(IDialogContext context,  IAwaitable<object> result)
+        { }
+        /*private async Task ResumeAfterOptionDialog(IDialogContext context, IAwaitable<object> result)
         {
             try
             {
@@ -147,7 +142,7 @@ namespace Bot_Lab.Dialogs
             {
                 context.Wait(this.MessageReceivedAsync);
             }
-        }
+        }*/
 
     }
  }
